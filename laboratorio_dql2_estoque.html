@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratório SQL DQL II — Controle de Estoque</title>
+<style>
+:root{
+  --bg:#0b1020;
+  --panel:#121a2d;
+  --panel2:#18233a;
+  --text:#eaf0ff;
+  --muted:#9fb0d0;
+  --accent:#8b5cf6;
+  --accent2:#22c55e;
+  --border:#263653;
+  --code:#09111f;
+  --warning:#f59e0b;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:linear-gradient(180deg,#09101d 0%,#0b1020 100%);
+  color:var(--text);
+  line-height:1.65;
+}
+.layout{
+  display:grid;
+  grid-template-columns:290px minmax(0,1fr);
+  min-height:100vh;
+}
+aside{
+  position:sticky;
+  top:0;
+  height:100vh;
+  padding:26px 18px;
+  border-right:1px solid var(--border);
+  background:rgba(9,16,29,.97);
+  overflow:auto;
+}
+.brand{font-size:1.1rem;font-weight:800;margin-bottom:6px}
+.subtitle{color:var(--muted);font-size:.88rem;margin-bottom:20px}
+nav a{
+  display:block;
+  color:var(--muted);
+  text-decoration:none;
+  padding:8px 10px;
+  border-radius:8px;
+  margin-bottom:3px;
+  font-size:.91rem;
+}
+nav a:hover{background:var(--panel);color:var(--text)}
+main{
+  width:min(1120px,100%);
+  margin:0 auto;
+  padding:46px 32px 80px;
+}
+.hero{
+  background:linear-gradient(135deg,rgba(139,92,246,.22),rgba(34,197,94,.08));
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:32px;
+  margin-bottom:30px;
+}
+.hero h1{
+  margin:0 0 12px;
+  font-size:clamp(2rem,4vw,3.4rem);
+  line-height:1.08;
+}
+.hero p{color:var(--muted);max-width:900px}
+.pill{
+  display:inline-block;
+  background:rgba(139,92,246,.14);
+  border:1px solid rgba(139,92,246,.4);
+  color:#c4b5fd;
+  border-radius:999px;
+  padding:6px 12px;
+  margin:4px 6px 4px 0;
+  font-size:.83rem;
+  font-weight:700;
+}
+section{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:26px;
+  margin:20px 0;
+}
+h2{margin-top:0;font-size:1.5rem}
+h3{margin-top:26px}
+p,li{color:#d8e1f5}
+.note,.challenge,.warning{
+  border-radius:12px;
+  padding:16px 18px;
+  margin:18px 0;
+}
+.note{border-left:4px solid var(--accent);background:rgba(139,92,246,.09)}
+.challenge{border-left:4px solid var(--accent2);background:rgba(34,197,94,.08)}
+.warning{border-left:4px solid var(--warning);background:rgba(245,158,11,.08)}
+.code-wrap{
+  position:relative;
+  margin:16px 0;
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  background:var(--code);
+}
+.code-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:9px 12px;
+  background:#0f172a;
+  border-bottom:1px solid var(--border);
+  color:var(--muted);
+  font-size:.82rem;
+}
+button.copy{
+  border:1px solid #334155;
+  background:#172036;
+  color:#dbeafe;
+  border-radius:8px;
+  padding:6px 10px;
+  cursor:pointer;
+  font-weight:700;
+}
+button.copy:hover{background:#22304e}
+button.copy.copied{
+  border-color:#166534;
+  color:#bbf7d0;
+  background:#052e16;
+}
+pre{
+  margin:0;
+  padding:18px;
+  overflow:auto;
+  color:#d8e9ff;
+  font-family:"Cascadia Code","Fira Code",Consolas,monospace;
+  font-size:.94rem;
+  line-height:1.55;
+}
+.map{
+  background:#0e1728;
+  border:1px dashed #365078;
+  border-radius:12px;
+  padding:18px;
+  white-space:pre-wrap;
+  font-family:Consolas,monospace;
+  color:#bdd0f6;
+  overflow:auto;
+}
+.exercise{
+  border:1px solid #2f4c3f;
+  background:#0d1d18;
+  border-radius:12px;
+  padding:16px;
+  margin:14px 0;
+}
+.exercise strong{color:#bbf7d0}
+.progress{
+  position:fixed;
+  top:0;
+  left:0;
+  height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  width:0%;
+  z-index:100;
+}
+.footer{
+  color:var(--muted);
+  text-align:center;
+  padding-top:30px;
+  font-size:.9rem;
+}
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  aside{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+  main{padding:26px 18px 60px}
+  nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+
+<div class="layout">
+<aside>
+  <div class="brand">Laboratório SQL DQL II</div>
+  <div class="subtitle">Sistema de Controle de Estoque</div>
+  <nav>
+    <a href="#objetivo">Objetivo</a>
+    <a href="#etapa0">0. Banco</a>
+    <a href="#etapa1">1. Modelo</a>
+    <a href="#etapa2">2. Categoria</a>
+    <a href="#etapa3">3. Produto</a>
+    <a href="#etapa4">4. Fornecedor</a>
+    <a href="#etapa5">5. Produto x Fornecedor</a>
+    <a href="#etapa6">6. Movimentação</a>
+    <a href="#etapa8">7. Inserts</a>
+    <a href="#joins">8. JOINs</a>
+    <a href="#agregacoes">9. Agregações</a>
+    <a href="#groupby">10. GROUP BY / HAVING</a>
+    <a href="#subconsultas">11. Subconsultas</a>
+    <a href="#estoque">12. Estoque atual</a>
+    <a href="#exercicios">13. Exercícios</a>
+    <a href="#desafio">14. Desafio final</a>
+  </nav>
+</aside>
+
+<main>
+<header class="hero">
+  <span class="pill">MySQL</span>
+  <span class="pill">JOIN</span>
+  <span class="pill">GROUP BY</span>
+  <span class="pill">HAVING</span>
+  <span class="pill">SUBQUERY</span>
+  <h1>Laboratório SQL DQL II — Controle de Estoque</h1>
+  <p>Construa o banco, carregue os dados e evolua das consultas simples para JOINs, agregações, GROUP BY, HAVING, subconsultas e cálculo de estoque atual.</p>
+</header>
+
+<section id="objetivo">
+  <h2>Objetivo</h2>
+  <ul>
+    <li>Criar tabelas relacionadas com PK e FK.</li>
+    <li>Inserir dados para testes.</li>
+    <li>Praticar INNER, LEFT, RIGHT e FULL JOIN conceitual.</li>
+    <li>Utilizar COUNT, SUM, AVG, MIN e MAX.</li>
+    <li>Aplicar GROUP BY e HAVING.</li>
+    <li>Construir subconsultas.</li>
+    <li>Calcular saldo de estoque usando CASE + SUM.</li>
+  </ul>
+</section>
+
+<section id="etapa0">
+  <h2>Etapa 0 — Selecionando o banco</h2>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>USE bd_aluno01;</code></pre></div>
+  <p>Troque o número conforme o seu usuário.</p>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SELECT DATABASE();</code></pre></div>
+</section>
+
+<section id="etapa1">
+  <h2>Etapa 1 — Modelo do sistema</h2>
+  <div class="map">CATEGORIA 1 -------- N PRODUTO
+
+PRODUTO N -------- N FORNECEDOR
+      via PRODUTO_FORNECEDOR
+
+PRODUTO 1 -------- N MOVIMENTACAO_ESTOQUE</div>
+</section>
+
+<section id="etapa2">
+  <h2>Etapa 2 — Criando CATEGORIA</h2>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>CREATE TABLE categoria (
+    id_categoria INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL UNIQUE
+);</code></pre></div>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>DESCRIBE categoria;</code></pre></div>
+</section>
+
+<section id="etapa3">
+  <h2>Etapa 3 — Criando PRODUTO</h2>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>CREATE TABLE produto (
+    id_produto INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL,
+    sku VARCHAR(30) NOT NULL UNIQUE,
+    preco DECIMAL(10,2) NOT NULL,
+    estoque_minimo INT NOT NULL DEFAULT 0,
+    id_categoria INT,
+
+    CONSTRAINT chk_preco
+        CHECK (preco &gt;= 0),
+
+    CONSTRAINT chk_estoque_minimo
+        CHECK (estoque_minimo &gt;= 0),
+
+    CONSTRAINT fk_produto_categoria
+        FOREIGN KEY (id_categoria)
+        REFERENCES categoria(id_categoria)
+);</code></pre></div>
+</section>
+
+<section id="etapa4">
+  <h2>Etapa 4 — Criando FORNECEDOR</h2>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>CREATE TABLE fornecedor (
+    id_fornecedor INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL,
+    cnpj VARCHAR(18) NOT NULL UNIQUE,
+    email VARCHAR(150)
+);</code></pre></div>
+</section>
+
+<section id="etapa5">
+  <h2>Etapa 5 — Criando PRODUTO_FORNECEDOR</h2>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>CREATE TABLE produto_fornecedor (
+    id_produto INT NOT NULL,
+    id_fornecedor INT NOT NULL,
+    preco_compra DECIMAL(10,2),
+
+    PRIMARY KEY (
+        id_produto,
+        id_fornecedor
+    ),
+
+    CONSTRAINT fk_pf_produto
+        FOREIGN KEY (id_produto)
+        REFERENCES produto(id_produto),
+
+    CONSTRAINT fk_pf_fornecedor
+        FOREIGN KEY (id_fornecedor)
+        REFERENCES fornecedor(id_fornecedor)
+);</code></pre></div>
+</section>
+
+<section id="etapa6">
+  <h2>Etapa 6 — Criando MOVIMENTACAO_ESTOQUE</h2>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>CREATE TABLE movimentacao_estoque (
+    id_movimentacao INT AUTO_INCREMENT PRIMARY KEY,
+    id_produto INT NOT NULL,
+    tipo VARCHAR(10) NOT NULL,
+    quantidade INT NOT NULL,
+    data_movimentacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_tipo_movimentacao
+        CHECK (tipo IN ('ENTRADA', 'SAIDA')),
+
+    CONSTRAINT chk_quantidade
+        CHECK (quantidade &gt; 0),
+
+    CONSTRAINT fk_movimentacao_produto
+        FOREIGN KEY (id_produto)
+        REFERENCES produto(id_produto)
+);</code></pre></div>
+
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SHOW TABLES;</code></pre></div>
+</section>
+
+<section id="etapa8">
+  <h2>Etapa 7 — Inserindo dados</h2>
+
+  <h3>Categorias</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>INSERT INTO categoria (nome)
+VALUES
+('Informática'),
+('Escritório'),
+('Eletrônicos'),
+('Segurança');</code></pre></div>
+
+  <h3>Produtos</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>INSERT INTO produto
+(nome, sku, preco, estoque_minimo, id_categoria)
+VALUES
+('Notebook Dell', 'NOTE001', 4500.00, 3, 1),
+('Mouse Logitech', 'MOUSE001', 150.00, 10, 1),
+('Teclado Mecânico', 'TECLADO001', 350.00, 5, 1),
+('Cadeira Escritório', 'CADEIRA001', 900.00, 2, 2),
+('Monitor 27', 'MONITOR001', 1800.00, 4, 3),
+('Webcam Full HD', 'WEBCAM001', 300.00, 5, NULL);</code></pre></div>
+
+  <h3>Fornecedores</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>INSERT INTO fornecedor
+(nome, cnpj, email)
+VALUES
+('Tech Distribuidora', '11.111.111/0001-11', 'contato@tech.com'),
+('Info Supply', '22.222.222/0001-22', 'vendas@infosupply.com'),
+('Office Brasil', '33.333.333/0001-33', 'contato@officebrasil.com'),
+('Fornecedor Sem Produto', '44.444.444/0001-44', 'semproduto@email.com');</code></pre></div>
+
+  <h3>Produto x Fornecedor</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>INSERT INTO produto_fornecedor
+(id_produto, id_fornecedor, preco_compra)
+VALUES
+(1, 1, 3800.00),
+(1, 2, 3900.00),
+(2, 1, 100.00),
+(3, 2, 280.00),
+(4, 3, 700.00),
+(5, 1, 1500.00);</code></pre></div>
+
+  <h3>Movimentações de entrada</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>INSERT INTO movimentacao_estoque
+(id_produto, tipo, quantidade)
+VALUES
+(1, 'ENTRADA', 10),
+(2, 'ENTRADA', 30),
+(3, 'ENTRADA', 15),
+(4, 'ENTRADA', 5),
+(5, 'ENTRADA', 8);</code></pre></div>
+
+  <h3>Movimentações de saída</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>INSERT INTO movimentacao_estoque
+(id_produto, tipo, quantidade)
+VALUES
+(1, 'SAIDA', 3),
+(2, 'SAIDA', 12),
+(3, 'SAIDA', 4),
+(5, 'SAIDA', 2);</code></pre></div>
+</section>
+
+<section id="joins">
+  <h2>Etapa 8 — JOINs</h2>
+
+  <h3>INNER JOIN</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SELECT
+    p.nome AS produto,
+    c.nome AS categoria
+FROM produto p
+INNER JOIN categoria c
+    ON p.id_categoria = c.id_categoria;</code></pre></div>
+
+  <h3>LEFT JOIN</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SELECT
+    p.nome AS produto,
+    c.nome AS categoria
+FROM produto p
+LEFT JOIN categoria c
+    ON p.id_categoria = c.id_categoria;</code></pre></div>
+
+  <h3>RIGHT JOIN</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SELECT
+    p.nome AS produto,
+    c.nome AS categoria
+FROM produto p
+RIGHT JOIN categoria c
+    ON p.id_categoria = c.id_categoria;</code></pre></div>
+
+  <h3>FULL JOIN conceitual</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SELECT
+    p.nome AS produto,
+    c.nome AS categoria
+FROM produto p
+LEFT JOIN categoria c
+    ON p.id_categoria = c.id_categoria
+
+UNION
+
+SELECT
+    p.nome AS produto,
+    c.nome AS categoria
+FROM produto p
+RIGHT JOIN categoria c
+    ON p.id_categoria = c.id_categoria;</code></pre></div>
+
+  <h3>Produto + Fornecedor</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SELECT
+    p.nome AS produto,
+    f.nome AS fornecedor,
+    pf.preco_compra
+FROM produto p
+INNER JOIN produto_fornecedor pf
+    ON p.id_produto = pf.id_produto
+INNER JOIN fornecedor f
+    ON pf.id_fornecedor = f.id_fornecedor;</code></pre></div>
+</section>
+
+<section id="agregacoes">
+  <h2>Etapa 9 — Funções de agregação</h2>
+
+  <div class="code-wrap"><div class="code-head"><span>COUNT</span><button class="copy">Copiar</button></div><pre><code>SELECT COUNT(*) AS total_produtos
+FROM produto;</code></pre></div>
+
+  <div class="code-wrap"><div class="code-head"><span>AVG</span><button class="copy">Copiar</button></div><pre><code>SELECT AVG(preco) AS preco_medio
+FROM produto;</code></pre></div>
+
+  <div class="code-wrap"><div class="code-head"><span>MIN / MAX</span><button class="copy">Copiar</button></div><pre><code>SELECT
+    MIN(preco) AS menor_preco,
+    MAX(preco) AS maior_preco
+FROM produto;</code></pre></div>
+</section>
+
+<section id="groupby">
+  <h2>Etapa 10 — GROUP BY e HAVING</h2>
+
+  <h3>Quantidade de produtos por categoria</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SELECT
+    c.nome AS categoria,
+    COUNT(p.id_produto) AS quantidade
+FROM categoria c
+LEFT JOIN produto p
+    ON c.id_categoria = p.id_categoria
+GROUP BY
+    c.id_categoria,
+    c.nome;</code></pre></div>
+
+  <h3>Somente categorias com 2 ou mais produtos</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SELECT
+    c.nome AS categoria,
+    COUNT(p.id_produto) AS quantidade
+FROM categoria c
+JOIN produto p
+    ON c.id_categoria = p.id_categoria
+GROUP BY
+    c.id_categoria,
+    c.nome
+HAVING COUNT(p.id_produto) &gt;= 2;</code></pre></div>
+
+  <div class="note"><strong>Regra:</strong> WHERE filtra linhas. HAVING filtra grupos após o GROUP BY.</div>
+</section>
+
+<section id="subconsultas">
+  <h2>Etapa 11 — Subconsultas</h2>
+
+  <h3>Produto mais caro</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SELECT
+    nome,
+    preco
+FROM produto
+WHERE preco = (
+    SELECT MAX(preco)
+    FROM produto
+);</code></pre></div>
+
+  <h3>Produtos acima da média</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SELECT
+    nome,
+    preco
+FROM produto
+WHERE preco &gt; (
+    SELECT AVG(preco)
+    FROM produto
+);</code></pre></div>
+</section>
+
+<section id="estoque">
+  <h2>Etapa 12 — Calculando estoque atual</h2>
+  <div class="map">ENTRADA → soma
+SAÍDA   → subtrai</div>
+
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SELECT
+    p.nome,
+
+    SUM(
+        CASE
+            WHEN m.tipo = 'ENTRADA'
+                THEN m.quantidade
+            WHEN m.tipo = 'SAIDA'
+                THEN -m.quantidade
+        END
+    ) AS estoque_atual
+
+FROM produto p
+
+JOIN movimentacao_estoque m
+    ON p.id_produto = m.id_produto
+
+GROUP BY
+    p.id_produto,
+    p.nome;</code></pre></div>
+
+  <h3>Produtos sem movimentação</h3>
+  <div class="code-wrap"><div class="code-head"><span>SQL</span><button class="copy">Copiar</button></div><pre><code>SELECT
+    p.nome
+FROM produto p
+LEFT JOIN movimentacao_estoque m
+    ON p.id_produto = m.id_produto
+WHERE m.id_movimentacao IS NULL;</code></pre></div>
+</section>
+
+<section id="exercicios">
+  <h2>Etapa 13 — Exercícios</h2>
+
+  <div class="exercise"><strong>Exercício 1:</strong> Liste Produto, Categoria e Preço usando INNER JOIN.</div>
+  <div class="exercise"><strong>Exercício 2:</strong> Liste todos os produtos, inclusive os sem categoria, usando LEFT JOIN.</div>
+  <div class="exercise"><strong>Exercício 3:</strong> Liste todas as categorias, inclusive as sem produtos, usando RIGHT JOIN.</div>
+  <div class="exercise"><strong>Exercício 4:</strong> Liste Produto, Fornecedor e Preço de compra.</div>
+  <div class="exercise"><strong>Exercício 5:</strong> Descubra quantos produtos existem usando COUNT().</div>
+  <div class="exercise"><strong>Exercício 6:</strong> Calcule preço médio, menor preço e maior preço.</div>
+  <div class="exercise"><strong>Exercício 7:</strong> Mostre a quantidade de produtos por categoria usando GROUP BY.</div>
+  <div class="exercise"><strong>Exercício 8:</strong> Mostre somente categorias com 2 ou mais produtos usando HAVING.</div>
+  <div class="exercise"><strong>Exercício 9:</strong> Mostre o preço médio dos produtos por categoria.</div>
+  <div class="exercise"><strong>Exercício 10:</strong> Liste produtos com preço maior que a média usando subconsulta.</div>
+  <div class="exercise"><strong>Exercício 11:</strong> Descubra o produto mais caro usando MAX() + subconsulta.</div>
+  <div class="exercise"><strong>Exercício 12:</strong> Liste produtos que nunca tiveram movimentação.</div>
+  <div class="exercise"><strong>Exercício 13:</strong> Liste fornecedores que ainda não fornecem nenhum produto.</div>
+  <div class="exercise"><strong>Exercício 14:</strong> Mostre Produto + Total de entradas.</div>
+  <div class="exercise"><strong>Exercício 15:</strong> Mostre Produto + Total de saídas.</div>
+  <div class="exercise"><strong>Exercício 16:</strong> Calcule o estoque atual de cada produto usando SUM + CASE + GROUP BY.</div>
+</section>
+
+<section id="desafio">
+  <h2>Etapa 14 — Desafio Final</h2>
+
+  <div class="challenge">
+    <strong>Relatório gerencial de estoque</strong>
+    <p>Crie uma consulta que apresente:</p>
+    <ul>
+      <li>Produto</li>
+      <li>Categoria</li>
+      <li>Quantidade total de entrada</li>
+      <li>Quantidade total de saída</li>
+      <li>Estoque atual</li>
+      <li>Preço de venda</li>
+    </ul>
+    <p>A consulta deve utilizar JOIN, SUM, CASE, GROUP BY e ORDER BY.</p>
+    <p>Ordene do menor estoque para o maior.</p>
+  </div>
+
+  <div class="challenge">
+    <strong>Desafio Extra</strong>
+    <p>Mostre somente produtos cujo estoque atual seja menor ou igual ao estoque mínimo.</p>
+    <p>Dica: utilize <code>HAVING</code> junto com o cálculo do estoque.</p>
+  </div>
+
+  <div class="note">
+    <strong>Entrega:</strong> arquivo <code>atividade_estoque_nome_aluno.sql</code>, com cada exercício identificado por comentário.
+  </div>
+</section>
+
+<div class="footer">Laboratório SQL DQL II • Controle de Estoque</div>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(button => {
+  button.addEventListener('click', async () => {
+    const code = button.closest('.code-wrap').querySelector('code').innerText;
+    await navigator.clipboard.writeText(code);
+    const old = button.textContent;
+    button.textContent = 'Copiado ✓';
+    button.classList.add('copied');
+    setTimeout(() => {
+      button.textContent = old;
+      button.classList.remove('copied');
+    }, 1500);
+  });
+});
+
+const progress = document.getElementById('progress');
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const max = h.scrollHeight - h.clientHeight;
+  const pct = max > 0 ? (h.scrollTop / max) * 100 : 0;
+  progress.style.width = pct + '%';
+});
+</script>
+</body>
+</html>
